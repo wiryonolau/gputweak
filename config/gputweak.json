@@ -1,0 +1,84 @@
+[
+    {
+        "description": "MSI RX580 GAMING X",
+        "driver" : "amdgpu",
+        "system_id": "1002:67df",
+        "subsystem_id": "1462:3417",
+        "tweaks" : [
+            "@ROCSMI@ -d @GPUID@ --setfan 180",
+            "@ROCSMI@ -d @GPUID@ --setsclk 3"
+        ]
+    },
+    {
+        "description": "MSI RX580 GAMING X Plus",
+        "driver" : "amdgpu",
+        "system_id": "1002:67df",
+        "subsystem_id": "1462:3419",
+        "tweaks" : [
+            "@ROCSMI@ -d @GPUID@ --setfan 180",
+            "@ROCSMI@ -d @GPUID@ --setsclk 3"
+        ]
+    },
+    {
+        "description": "ASUS RX480 STRIX OC",
+        "driver" : "amdgpu",
+        "system_id": "1002:67df",
+        "subsystem_id": "1043:04fb",
+        "tweaks" : [
+            "@ROCSMI@ -d @GPUID@ --setfan 180",
+            "@ROCSMI@ -d @GPUID@ --setsclk 4"
+        ]
+    },
+    {
+        "description": "ASUS RX480 PROTOTYPE",
+        "driver" : "amdgpu",
+        "system_id": "1002:67df",
+        "subsystem_id": "1043:04a8",
+        "tweaks" : [
+            "@ROCSMI@ -d @GPUID@ --setfan 200",
+            "@ROCSMI@ -d @GPUID@ --setsclk 5"
+        ]
+    },
+    {
+        "description": "COLORFUL GTX 1070 8G U-TOP",
+        "driver" : "nvidia",
+        "system_id" : "10de:1b81",
+        "subsystem_id": "7377:0000",
+        "tweaks" : [
+            "@NVSET@ -a [gpu:0]/GPUFanControlState=1",
+            "@NVSET@ -a [fan:0]/GPUTargetFanSpeed=70",
+            "@NVSET@ -a [gpu:0]/GPUPowerMizerMode=1",
+            "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=-200",
+            "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=450",
+            "@NVSMI@ -i @PCI_BUS@ -pm 1",
+            "@NVSMI@ -i @PCI_BUS@ -pl 100"
+        ]
+    },
+    {
+        "description": "COLORFUL GTX 1070 8G U-TOP",
+        "driver" : "nvidia",
+        "system_id" : "10de:1b81",
+        "subsystem_id": "10de:119d",
+        "tweaks" : [
+            "@NVSET@ -a [gpu:0]/GPUFanControlState=1",
+            "@NVSET@ -a [fan:0]/GPUTargetFanSpeed=70",
+            "@NVSET@ -a [gpu:0]/GPUPowerMizerMode=1",
+            "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=-200",
+            "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=450",
+            "@NVSMI@ -i @PCI_BUS@ -pm 1",
+            "@NVSMI@ -i @PCI_BUS@ -pl 100"
+        ]
+    },
+    {
+        "description": "GIGABYTE GTX 1050TI OC",
+        "driver" : "nvidia",
+        "system_id" : "10de:1c82",
+        "subsystem_id": "1458:378e",
+        "tweaks" : [
+            "@NVSET@ -a [gpu:0]/GPUFanControlState=1",
+            "@NVSET@ -a [fan:0]/GPUTargetFanSpeed=70",
+            "@NVSMI@ -i @PCI_BUS@ -pm 1",
+            "@NVSMI@ -i @PCI_BUS@ -pl 52.5"
+        ]
+    }
+]
