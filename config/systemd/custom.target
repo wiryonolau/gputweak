@@ -1,0 +1,6 @@
+#Copy this to /etc/systemd/system/custom.target
+[Unit]
+Description=Custom Target
+Requires=multi-user.target
+After=multi-user.target
+AllowIsolate=yes

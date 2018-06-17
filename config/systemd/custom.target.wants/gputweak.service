@@ -1,0 +1,14 @@
+#Copy this to /etc/systemd/system/custom.target.wants/gputweak.service
+[Unit]
+Description=tweak GPU at startup
+After=multi-user.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/gputweak -v
+ExecStop=/usr/bin/gputweak -v --reset
+RemainAfterExit=true
+
+[Install]
+WantedBy=custom.target
+
