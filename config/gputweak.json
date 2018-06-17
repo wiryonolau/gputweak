@@ -40,6 +40,36 @@
         ]
     },
     {
+        "description": "POWERCOLOR RX580 4GB",
+        "driver" : "amdgpu",
+        "system_id": "1002:67df",
+        "subsystem_id": "148c:2378",
+        "tweaks" : [
+            "@ROCSMI@ -d @GPUID@ --setfan 180",
+            "@ROCSMI@ -d @GPUID@ --setsclk 3"
+        ]
+    },
+    {
+        "description": "POWERCOLOR RX570 8GB",
+        "driver" : "amdgpu",
+        "system_id": "1002:67df",
+        "subsystem_id": "148c:2379",
+        "tweaks" : [
+            "@ROCSMI@ -d @GPUID@ --setfan 200",
+            "@ROCSMI@ -d @GPUID@ --setsclk 5"
+        ]
+    },
+    {
+        "description": "NB RX580 8GB",
+        "driver" : "amdgpu",
+        "system_id": "1002:67df",
+        "subsystem_id": "1002:0b31",
+        "tweaks" : [
+            "@ROCSMI@ -d @GPUID@ --setfan 180",
+            "@ROCSMI@ -d @GPUID@ --setsclk 7"
+        ]
+    },
+    {
         "description": "COLORFUL GTX 1070 8G U-TOP",
         "driver" : "nvidia",
         "system_id" : "10de:1b81",

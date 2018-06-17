@@ -1,19 +1,36 @@
 #!/bin/bash
 
 #Global Variables
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-TWEAKCONFIG="$DIR/config/gputweak.json"
-NVSMI='/usr/bin/nvidia-smi'
-NVSET='/usr/bin/nvidia-settings'
-ROCSMI='/usr/bin/rocm-smi'
+WORKDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+TWEAKCONFIG=$(cat "$WORKDIR/config/gputweak.json")
+NV_COOLBITS=12
 TEST=0
 VERBOSE=0
 DISPLAY=10
 PCI_REGEX='/\(VGA compatible\|3D controller\).*\(AMD\|\NVIDIA\)/s/^\(..\):\(..\).\(.\).*/0x\1:0x\2:0x\3/p'
 SYSID_REGEX='\s(VGA compatible|3D controller).*(AMD|NVIDIA)'
 
+#Executable placeholder
+NVSMI='/usr/bin/nvidia-smi'
+NVSET='/usr/bin/nvidia-settings'
+ROCSMI='/usr/bin/rocm-smi'
+
 function usage
 {
+    echo "Usage: gputweak [-v|--verbose] [-h|--help] [OPTIONS]"
+    echo " -v | --verbose   : output verbose"
+    echo " -h | --help      : this message"
+    echo ""
+    echo " OPTIONS"
+    echo "  --test           : Test mode, no tweak is run. Using"
+    echo "                      NVIDIA  10de:1b81 10de:119d device"
+    echo "                      AMD     1002:67df 1462:3417 device"
+    echo "  --coolbits       : set NVIDIA coolbits, default is 12"
+    echo "  --nvsmi          : set nvidia-smi executable path, default /usr/bin/nvidia-smi"
+    echo "  --nvset          : set nvidia-settings executable path, default /usr/bin/nvidia-settings"
+    echo "  --rocmsmi        : set rocm-smi executable path, default /usr/bin/rocm-smi"
+    echo "  --reset          : reset and remove all tweak"
+    echo "  --config         : specify gputweak config file, overwrite default. check config/gputweak.json for example"
     exit 0
 }
 
@@ -21,40 +38,69 @@ function parse_args
 {
     local _ARGS=()
     local _PCIIDS=""
+    local _RESET=""
 
     while [ "$1" ]
     do
         case "$1" in
-            "-v" )
+            "-v" | "--verbose" )
                 VERBOSE=1
             ;;
+            "-h" | "--help")
+                usage
+                exit 0
+                ;;
             "--test")
                 TEST=1
                 PCI_REGEX='s/^\(..\):\(..\).\(.\).*/0x\1:0x\2:0x\3/p'
                 SYSID_REGEX=''
                 _PCIIDS=$(printf "f0:00.0\nf1:00.0")
-            ;;
+                ;;
+            "--coolbits")
+                if [[ "$2" -le 31 ]]; then
+                    NV_COOLBITS="$2"
+                else
+                    printf "NVIDIA coolbits maximum value is 31\r\n"
+                fi
+                ;;
+            "--reset" )
+                _RESET=1
+                ;;
+            "--config" )
+                TWEAKCONFIG=$(cat "$2")
+                ;;            
+            "--nvsmi")
+                NVSMI="$2"
+                ;;
+            "--nvset")
+                NVSET="$2"
+                ;;
+            "--rocmsmi")
+                ROCSMI="$2"
+                ;;
         esac
         shift
     done
     
     set -- "${args[@]}"
 
-    start_tweak "${VERBOSE}" "${_PCIIDS}"
+    start_tweak "${_PCIIDS}" "${_RESET}"
     exit 0
 }
 
 function start_tweak
 {
-    if [ -z "$2" ]; then
+    local _RESET=$2
+
+    if [ -z "$1" ]; then
         #GET PCI ID FOR ALL NVIDIA/AMD GPU
         local _PCIIDS=$(lspci | sed -n -e "${PCI_REGEX}")
     else
-        local _PCIIDS=$(sed -n -e "${PCI_REGEX}" <<< "$2")
+        local _PCIIDS=$(sed -n -e "${PCI_REGEX}" <<< "$1")
     fi
 
     if [ -z "$_PCIIDS" ]; then
-        printf "No recongnizable AMD / NVIDIA Device\r\n"
+        printf "No recognizable AMD / NVIDIA Device\r\n\r\n"
         exit 0
     fi
 
@@ -92,8 +138,8 @@ function start_tweak
         fi
 
         #Parsing JSON config
-        local _DRIVER=$(jq -r ".[] | select(.system_id==\"${_SYSTEM_ID}\" and .subsystem_id==\"${_SUBSYSTEM_ID}\") | .driver" "${TWEAKCONFIG}")
-        local _TWEAKS=$(jq -r ".[] | select(.system_id==\"${_SYSTEM_ID}\" and .subsystem_id==\"${_SUBSYSTEM_ID}\") | .tweaks" "${TWEAKCONFIG}")
+        local _DRIVER=$(jq -r ".[] | select(.system_id==\"${_SYSTEM_ID}\" and .subsystem_id==\"${_SUBSYSTEM_ID}\") | .driver" <<< "${TWEAKCONFIG}")
+        local _TWEAKS=$(jq -r ".[] | select(.system_id==\"${_SYSTEM_ID}\" and .subsystem_id==\"${_SUBSYSTEM_ID}\") | .tweaks" <<< "${TWEAKCONFIG}")
       
         if [ -z "${_DRIVER}" ] || [ -z "${_TWEAKS}" ]; then
             if [ "$VERBOSE" = 1 ]; then
@@ -102,21 +148,24 @@ function start_tweak
             continue
         fi
 
- 
-        if [ "$VERBOSE" = 1 ]; then
-            printf "Driver : ${_DRIVER}\r\n"
-            printf "Tweaks commands : \r\n${_TWEAKS}\r\n"
-        fi
- 
         case "${_DRIVER}" in
             "amdgpu" )
                 tweak_amd "${_PCIID}" "${_TWEAKS}"
                 ;;
             "nvidia" )
-                tweak_nvidia "${_PCIID}" "${_TWEAKS}"
+                if [ ! -z "${_RESET}" ]; then
+                    _TWEAKS=( \
+                        "export DISPLAY=:${DISPLAY} @NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=0" \
+                        "export DISPLAY=:${DISPLAY} @NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=0" \
+                    )
+                    _TWEAKS=$(printf '%s\n' "${_TWEAKS[@]}" | jq -R . | jq -s .)
+                fi
+
+                tweak_nvidia "${_PCIID}" "${_TWEAKS}" "${_RESET}"
                 ;; 
         esac
         DISPLAY=$((DISPLAY+1))
+        printf "\r\n"
     done <<< "${_PCIIDS}"
 }
 
@@ -156,9 +205,12 @@ function tweak_amd
         if [ "$VERBOSE" = 1 ]; then
             printf "Running : ${_REALCMD}\r\n"
         fi
+    
+        if [ "${TEST}" = 0 ]; then
+            /bin/bash -c "${_REALCMD}"
+        fi
 
-        #/bin/bash -c "${_REALCMD}"
-        #wait
+        wait
     done
 }
 
@@ -166,6 +218,7 @@ function tweak_nvidia
 {
     local _PCIID=$1
     local _TWEAKS=$2
+    local _NOXORG=$3
 
     local _PCIBUS=$(parse_pciid "${_PCIID}" "lspci")
     local _COUNT=$(echo ${_TWEAKS} | jq ". | length")
@@ -180,13 +233,21 @@ function tweak_nvidia
         local _REALCMD=$(sed "s/@PCI_BUS@/${_PCIBUS}/g;s/@NVSET@/${NVSET//\//\\/}/g;s/@NVSMI@/${NVSMI//\//\\/}/g" <<< "${_CMD}")
         
         printf "${_REALCMD}\r\n" >> ${_TWEAK_CFG}
-
-        if [ "$VERBOSE" = 1 ]; then
-            printf "Running : ${_REALCMD}\r\n"
-        fi
     done
+        
+    if [ "$VERBOSE" = 1 ]; then
+        printf "${_TWEAK_CFG} content\r\n"
+        cat "${_TWEAK_CFG}"
+    fi
 
-    start_xorg "${_PCIID}" "${_TWEAK_CFG}"
+    if [ -z "${_NOXORG}" ]; then
+        start_xorg "${_PCIID}" "${_TWEAK_CFG}"
+    else
+        if [ "${TEST}" = 0 ]; then
+            /bin/bash -c "${_TWEAK_CFG}"
+        fi
+    fi
+    rm -f "${_TWEAK_CFG}"
 }
 
 function start_xorg
@@ -199,20 +260,23 @@ function start_xorg
 
     local _XORG_CFG=$(mktemp /tmp/xorg-XXXXXXXX.conf)
     sed -e s,@GPU_BUS_ID@,"${_PCIBUS_XORG}",    \
-        -e s,@SET_GPU_DIR@,"${DIR}", \
+        -e s,@SET_GPU_DIR@,"${WORKDIR}", \
+        -e s,@COOLBITS@,"${NV_COOLBITS}", \
         config/nvidia-xorg.conf >> "${_XORG_CFG}"
 
     if [ "${VERBOSE}" = 1 ]; then
         printf "xinit ${_TWEAK_CFG} --bus="${PCIID}" --run-forever --  :${DISPLAY} -once -config ${_XORG_CFG} > /dev/null 2>&1 &\r\n"
+        printf "${_XORG_CFG} content\r\n"
+        cat "${_XORG_CFG}"
     fi
 
     #RUN XINIT AND TWEAK
-    #xinit "${_TWEAK_CFG}" --bus="${PCIID}" --run-forever --  :"${DISPLAY}" -once -config "${_XORG_CFG}" > /dev/null 2>&1 &
-    #wait
+    if [ "${TEST}" = 0 ]; then
+        xinit "${_TWEAK_CFG}" --bus="${PCIID}" --run-forever --  :"${DISPLAY}" -once -config "${_XORG_CFG}" > /dev/null 2>&1 &
+    fi
 
     #CLEANUP
     rm -f "${_XORG_CFG}"
-    rm -f "${_TWEAK_CFG}"
 }
 
 function main
