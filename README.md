@@ -7,6 +7,15 @@ Gpu tweak script using nvidia-smi, nvidia-settings and rocm-smi.
 - Ubuntu 16.04 or above
 - Install either official NVIDIA driver or AMDGPU driver, FGLRX is not supported.
 
+## Install
+
+This will install script in /opt/gputweak and enable startup script
+Note that /etc/systemd/system/default.target will be change to script custom.target
+
+```
+sudo ./install.sh
+```
+
 ## Usage
 
 ```
@@ -28,7 +37,7 @@ Usage: gputweak [-v|--verbose] [-h|--help] [OPTIONS]
 ```
 
 ## Run at startup
-copy all file and folder inside config/systemd to /etc/systemd/system
+copy all file and folder inside config/systemd to /etc/systemd/system. If you run install.sh above, you can skip this.
 
 ```bash
 sudo cp -r config/systemd/* config/systemd/system
@@ -44,3 +53,5 @@ sudo ln -s /etc/systemd/system/custom.target /etc/systemd/system/default.target
 ## Notes
 Script can be run manually if you need to reset or apply new setting. "--noxorg" option is best to be specify for NVIDIA card on retweak.
 
+## Disclaimer
+Use this script at your own risk. We're not responsible for any damage this script cause to your system / GPU.
