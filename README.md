@@ -11,6 +11,8 @@ Gpu tweak script using nvidia-smi, nvidia-settings and rocm-smi.
 
 This will install script in /opt/gputweak and enable startup script
 Note that /etc/systemd/system/default.target will be change to script custom.target
+/etc/X11/xorg.conf will be created for dummy monitor and locked using chattr 
+
 
 ```
 sudo ./install.sh
@@ -37,7 +39,8 @@ Usage: gputweak [-v|--verbose] [-h|--help] [OPTIONS]
 ```
 
 ## Run at startup
-copy all file and folder inside config/systemd to /etc/systemd/system. If you run install.sh above, you can skip this.
+Copy all file and folder inside config/systemd to /etc/systemd/system. 
+If you run install.sh above, you can skip this.
 
 ```bash
 sudo cp -r config/systemd/* config/systemd/system
