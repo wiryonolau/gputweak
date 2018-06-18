@@ -5,6 +5,7 @@ Gpu tweak script using nvidia-smi, nvidia-settings and rocm-smi.
 ## Requirement
 
 - Ubuntu 16.04 or above
+- jq library installed ( apt-get install -y jq )
 - Install either official NVIDIA driver or AMDGPU driver, FGLRX is not supported.
 
 ## Install

@@ -4,6 +4,10 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+#Install jq (bash json parser) library
+apt-get update
+apt-get install -y jq
+
 #Put script in opt
 WORKDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cp -r "${WORKDIR}/*" /opt/gputweak
