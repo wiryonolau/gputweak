@@ -100,6 +100,21 @@
         ]
     },
     {
+        "description": "GAINWARD P104-100",
+        "driver" : "nvidia",
+        "system_id" : "10de:1b87",
+        "subsystem_id": "10de:1237",
+        "tweaks" : [
+            "@NVSET@ -a [gpu:0]/GPUFanControlState=1",
+            "@NVSET@ -a [fan:0]/GPUTargetFanSpeed=70",
+            "@NVSET@ -a [gpu:0]/GPUPowerMizerMode=1",
+            "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=-200",
+            "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=50",
+            "@NVSMI@ -i @PCI_BUS@ -pm 1",
+            "@NVSMI@ -i @PCI_BUS@ -pl 100"
+        ]
+    },
+    {
         "description": "GIGABYTE GTX 1050TI OC",
         "driver" : "nvidia",
         "system_id" : "10de:1c82",
