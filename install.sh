@@ -40,7 +40,7 @@ function parse_args
 function start_install
 {
     if [[ $EUID -ne 0 ]]; then
-       echo "This script must be run as root" 
+       printf "This script must be run as root\n" 
        exit 1
     fi
 
@@ -51,6 +51,7 @@ function start_install
     apt-get install -y jq
 
     #Put script in opt
+    printf "Create gputweak executable\n"
     WORKDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
     mkdir -p /opt/gputweak
     cp -r ${WORKDIR}/* /opt/gputweak
@@ -58,6 +59,7 @@ function start_install
     ln -s /opt/gputweak/gputweak /usr/bin/gputweak
 
     #Setup main xorg.conf
+    printf "Setup xorg.conf\n"
     if [[ ! -z "/etc/X11/xorg.conf" ]]; then
         NOW=$(date +%s)
         chattr -i /etc/X11/xorg.conf
@@ -67,11 +69,13 @@ function start_install
     chattr +i /etc/X11/xorg.conf
 
     #Enable systemd startup
+    printf "Setup systemd startup script\n"
     cp -r ${WORKDIR}/config/systemd/* /etc/systemd/system
     rm -f /etc/systemd/system/default.target
     ln -s /etc/systemd/system/custom.target /etc/systemd/system/default.target
 
     systemctl daemon-reload
+    printf "Setup done\n"
 }
 
 function main

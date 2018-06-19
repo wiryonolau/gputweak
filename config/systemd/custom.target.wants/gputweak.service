@@ -5,6 +5,7 @@ After=multi-user.target
 
 [Service]
 Type=forking
+ExecStartPre=/bin/sleep 10
 ExecStart=/usr/bin/gputweak -v
 ExecStop=/usr/bin/gputweak -v --reset
 RemainAfterExit=true
