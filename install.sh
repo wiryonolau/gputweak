@@ -45,7 +45,7 @@ function start_install
     fi
 
     #Install jq (bash json parser) library
-    if [[ ! -z "${NOUPDATE}" ]]; then
+    if [ -z "${NOUPDATE}" ]; then
         apt-get update
     fi
     apt-get install -y jq

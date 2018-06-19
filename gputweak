@@ -60,11 +60,11 @@ function parse_args
                 if [[ "$2" -le 31 ]]; then
                     NV_COOLBITS="$2"
                 else
-                    printf "NVIDIA coolbits maximum value is 31\r\n"
+                    printf "NVIDIA coolbits maximum value is 31\n"
                 fi
                 ;;
             "--reset" )
-                printf "Reset GPU configuration\r\n"
+                printf "Reset GPU configuration\n"
                 _RESET=1
                 ;;
             "--config" )
@@ -85,10 +85,10 @@ function parse_args
     
     set -- "${args[@]}"
 
-    printf "Start Tweak script using configuration:\r\n"
-    printf "nvidia-smi executable       : ${NVSMI}\r\n"
-    printf "nvidia-settings executable  : ${NVSET}\r\n"
-    printf "rocm-smi executable         : ${ROCSMI}\r\n"
+    printf "Start Tweak script using configuration:\n"
+    printf "nvidia-smi executable       : ${NVSMI}\n"
+    printf "nvidia-settings executable  : ${NVSET}\n"
+    printf "rocm-smi executable         : ${ROCSMI}\n"
 
     start_tweak "${_PCIIDS}" "${_RESET}"
     exit 0
@@ -106,7 +106,7 @@ function start_tweak
     fi
 
     if [ -z "$_PCIIDS" ]; then
-        printf "No recognizable AMD / NVIDIA Device\r\n\r\n"
+        printf "No recognizable AMD / NVIDIA Device\n\n"
         exit 0
     fi
 
@@ -134,13 +134,13 @@ function start_tweak
 
         if [ -z "${_SYSTEM_ID}" ] || [ -z "${_SUBSYSTEM_ID}" ]; then
             if [ "$VERBOSE" = 1 ]; then
-                printf "${_PCIBUS} device not recognize\r\n"
+                printf "${_PCIBUS} device not recognize\n"
             fi
             continue
         fi
 
         if [ "$VERBOSE" = 1 ]; then
-            printf "Tweaking device ${_SYSTEM_ID}, ${_SUBSYSTEM_ID}\r\n"
+            printf "Tweaking device ${_SYSTEM_ID}, ${_SUBSYSTEM_ID}\n"
         fi
 
         #Parsing JSON config
@@ -149,7 +149,7 @@ function start_tweak
       
         if [ -z "${_DRIVER}" ] || [ -z "${_TWEAKS}" ]; then
             if [ "$VERBOSE" = 1 ]; then
-                printf "Device ${_PCIBUS} with id ${_SYSTEM_ID}, subsystem id ${_SUBSYSTEM_ID} doesn't require tweak\r\n"
+                printf "Device ${_PCIBUS} with id ${_SYSTEM_ID}, subsystem id ${_SUBSYSTEM_ID} doesn't require tweak\n"
             fi
             continue
         fi
@@ -179,7 +179,7 @@ function start_tweak
                 ;; 
         esac
         DISPLAY=$((DISPLAY+1))
-        printf "\r\n"
+        printf "\n"
     done <<< "${_PCIIDS}"
 }
 
@@ -213,7 +213,7 @@ function tweak_amd
     local _COUNT=$(echo ${_TWEAKS} | jq ". | length")
    
     if [ -z "${_GPUID}" ] && [ "${TEST}" = 0 ]; then
-        printf "Device GPU not found\r\n"
+        printf "Device GPU not found\n"
         exit 0
     fi
  
@@ -223,7 +223,7 @@ function tweak_amd
         local _REALCMD=$(sed "s/@GPUID@/${_GPUID}/g;s/@ROCSMI@/${ROCSMI//\//\\/}/g" <<< "${_CMD}")
         
         if [ "$VERBOSE" = 1 ]; then
-            printf "Running : ${_REALCMD}\r\n"
+            printf "Running : ${_REALCMD}\n"
         fi
     
         if [ "${TEST}" = 0 ]; then
@@ -249,37 +249,43 @@ function tweak_nvidia
   
     #Prepare temporary tweak file
     local _TWEAK_CFG=$(mktemp /tmp/tweak-XXXXXXXX.sh)
-    printf "#!/bin/bash\r\n" >> ${_TWEAK_CFG}
+    printf "#!/bin/bash\nexport DISPLAY=:${DISPLAY}\n" >> ${_TWEAK_CFG}
     for (( i=0; i<${_COUNT}; i++ ))
     do
         local _CMD=$(echo ${_TWEAKS} | jq -r ".[${i}]")
         local _REALCMD=$(sed "s/@PCI_BUS@/${_PCIBUS}/g;s/@NVSET@/${NVSET//\//\\/}/g;s/@NVSMI@/${NVSMI//\//\\/}/g" <<< "${_CMD}")
-        _REALCMD="DISPLAY=:${DISPLAY} ${_REALCMD}"
-        printf "${_REALCMD}\r\n" >> ${_TWEAK_CFG}
+        printf "${_REALCMD}\n" >> ${_TWEAK_CFG}
     done
     
     if [ "$VERBOSE" = 1 ]; then
-        printf "${_TWEAK_CFG} content\r\n"
+        printf "${_TWEAK_CFG} content\n"
         cat "${_TWEAK_CFG}"
     fi
     
     #Recheck again before applying tweak
     if [[ ! $(xset -q -display "${DISPLAY}") ]]; then
-        printf "Cannot start X Server on display ${DISPLAY}, disable tweak\r\n"
+        printf "Cannot start X Server on display ${DISPLAY}, disable tweak\n"
     else
         if [ "${TEST}" = 0 ]; then
             /bin/bash -c "${_TWEAK_CFG}"
         fi
     fi
-    
-    rm -f "${_TWEAK_CFG}"
+   
+    #Cannot remove 
+    #rm -f "${_TWEAK_CFG}"
 }
 
 function start_xorg
 {
     local _PCIID=$1
+
+    if [[ $EUID -ne 0 ]]; then
+       printf "This script must be run as root\n" 
+       return 0
+    fi
+
     local _LOOP_FILE=$(mktemp /tmp/loop-XXXXXXXX.sh)
-    printf "#!/bin/bash\r\nwhile true\r\ndo\r\nsleep 10\r\ndone\r\n" >> ${_LOOP_FILE}
+    printf "#!/bin/bash\nwhile true\ndo\nsleep 10\ndone\n" >> ${_LOOP_FILE}
 
     local _PCIBUS_XORG=$(parse_pciid "${_PCIID}" "xorg")
 
@@ -290,8 +296,8 @@ function start_xorg
         "${WORKDIR}/config/nvidia-xorg.conf" >> "${_XORG_CFG}"
 
     if [ "${VERBOSE}" = 1 ]; then
-        printf "xinit ${_LOOP_FILE} --  :${DISPLAY} -once -config ${_XORG_CFG} > /dev/null 2>&1 &\r\n"
-        printf "${_XORG_CFG} content\r\n"
+        printf "xinit ${_LOOP_FILE} --  :${DISPLAY} -once -config ${_XORG_CFG} > /dev/null 2>&1 &\n"
+        printf "${_XORG_CFG} content\n"
         cat "${_XORG_CFG}"
     fi
 
@@ -301,9 +307,9 @@ function start_xorg
         wait
     fi
 
-    #CLEANUP
-    rm -f "${_XORG_CFG}"
-    rm -f "${_LOOP_FILE}"
+    #Cannot remove
+    #rm -f "${_XORG_CFG}"
+    #rm -f "${_LOOP_FILE}"
 }
 
 function main
