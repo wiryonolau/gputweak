@@ -36,7 +36,6 @@ Usage: gputweak [-v|--verbose] [-h|--help] [OPTIONS]
   --rocmsmi        : set rocm-smi executable path, default /usr/bin/rocm-smi
   --reset          : reset and remove all tweak
   --config         : specify gputweak config file, overwrite default. check config/gputweak.json for example
-  --noxorg         : disable xinit, for nvidia only
 ```
 
 ## Run at startup
@@ -55,7 +54,7 @@ sudo ln -s /etc/systemd/system/custom.target /etc/systemd/system/default.target
 ```
 
 ## Notes
-Script can be run manually if you need to reset or apply new setting. "--noxorg" option is best to be specify for NVIDIA card on retweak.
+Script can be run manually if you need to reset or apply new setting.
 
 ## Disclaimer
 Use this script at your own risk. We're not responsible for any damage this script cause to your system / GPU.

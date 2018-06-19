@@ -7,7 +7,6 @@ NV_COOLBITS=12
 TEST=0
 VERBOSE=0
 DISPLAY=10
-NOXORG=""
 PCI_REGEX='/\(VGA compatible\|3D controller\).*\(AMD\|\NVIDIA\)/s/^\(..\):\(..\).\(.\).*/0x\1:0x\2:0x\3/p'
 SYSID_REGEX='\s(VGA compatible|3D controller).*(AMD|NVIDIA)'
 
@@ -32,7 +31,6 @@ function usage
     echo "  --rocmsmi        : set rocm-smi executable path, default /usr/bin/rocm-smi"
     echo "  --reset          : reset and remove all tweak"
     echo "  --config         : specify gputweak config file, overwrite default. check config/gputweak.json for example"
-    echo "  --noxorg         : disable xinit, for nvidia only"
     exit 0
 }
 
@@ -68,7 +66,6 @@ function parse_args
             "--reset" )
                 printf "Reset GPU configuration\r\n"
                 _RESET=1
-                NOXORG=1
                 ;;
             "--config" )
                 TWEAKCONFIG=$(cat "$2")
@@ -82,9 +79,6 @@ function parse_args
             "--rocmsmi")
                 ROCSMI="$2"
                 ;;
-            "--noxorg" )
-                NOXORG=1
-                ;;
         esac
         shift
     done
@@ -95,7 +89,6 @@ function parse_args
     printf "nvidia-smi executable       : ${NVSMI}\r\n"
     printf "nvidia-settings executable  : ${NVSET}\r\n"
     printf "rocm-smi executable         : ${ROCSMI}\r\n"
-    printf "using xinit                 : $(if [ -z "${NOXORG}" ]; then echo "True"; else echo "False" ; fi)\r\n"
 
     start_tweak "${_PCIIDS}" "${_RESET}"
     exit 0
@@ -180,7 +173,6 @@ function start_tweak
                         "@NVSMI@ -i @PCI_BUS@ -rac "  
                     )
                     _TWEAKS=$(printf '%s\n' "${_TWEAKS[@]}" | jq -R . | jq -s .)
-                    NOXORG=1
                 fi
 
                 tweak_nvidia "${_PCIID}" "${_TWEAKS}"
@@ -220,7 +212,7 @@ function tweak_amd
     local _GPUID=$(parse_pciid "${_PCIID}" "rocm")
     local _COUNT=$(echo ${_TWEAKS} | jq ". | length")
    
-    if [ -z "${_GPUID}" ]; then
+    if [ -z "${_GPUID}" ] && [ "${TEST}" = 0 ]; then
         printf "Device GPU not found\r\n"
         exit 0
     fi
@@ -250,42 +242,44 @@ function tweak_nvidia
     local _PCIBUS=$(parse_pciid "${_PCIID}" "lspci")
     local _COUNT=$(echo ${_TWEAKS} | jq ". | length")
 
-    #Prepare temporary tweak file for xinit
+
+    if [[ ! $(xset -q -display "${DISPLAY}") ]]; then
+        start_xorg "${_PCIID}"
+    fi
+  
+    #Prepare temporary tweak file
     local _TWEAK_CFG=$(mktemp /tmp/tweak-XXXXXXXX.sh)
     printf "#!/bin/bash\r\n" >> ${_TWEAK_CFG}
-
     for (( i=0; i<${_COUNT}; i++ ))
     do
         local _CMD=$(echo ${_TWEAKS} | jq -r ".[${i}]")
         local _REALCMD=$(sed "s/@PCI_BUS@/${_PCIBUS}/g;s/@NVSET@/${NVSET//\//\\/}/g;s/@NVSMI@/${NVSMI//\//\\/}/g" <<< "${_CMD}")
-      
-        #Check if x server already started on current display 
-        if [ "${NOXORG}" = 1 ] || [[ ! $(xset -q -display "${DISPLAY}") ]]; then
-            _REALCMD="DISPLAY=:${DISPLAY} ${_REALCMD}"
-        fi
- 
+        _REALCMD="DISPLAY=:${DISPLAY} ${_REALCMD}"
         printf "${_REALCMD}\r\n" >> ${_TWEAK_CFG}
     done
-        
+    
     if [ "$VERBOSE" = 1 ]; then
         printf "${_TWEAK_CFG} content\r\n"
         cat "${_TWEAK_CFG}"
     fi
-
-    if [ -z "${NOXORG}" ]; then
-        start_xorg "${_PCIID}" "${_TWEAK_CFG}"
+    
+    #Recheck again before applying tweak
+    if [[ ! $(xset -q -display "${DISPLAY}") ]]; then
+        printf "Cannot start X Server on display ${DISPLAY}, disable tweak\r\n"
     else
         if [ "${TEST}" = 0 ]; then
             /bin/bash -c "${_TWEAK_CFG}"
         fi
     fi
+    
     rm -f "${_TWEAK_CFG}"
 }
 
 function start_xorg
 {
     local _PCIID=$1
-    local _TWEAK_CFG=$2
+    local _LOOP_FILE=$(mktemp /tmp/loop-XXXXXXXX.sh)
+    printf "#!/bin/bash\r\nwhile true\r\ndo\r\nsleep 10\r\ndone\r\n" >> ${_LOOP_FILE}
 
     local _PCIBUS_XORG=$(parse_pciid "${_PCIID}" "xorg")
 
@@ -296,18 +290,20 @@ function start_xorg
         "${WORKDIR}/config/nvidia-xorg.conf" >> "${_XORG_CFG}"
 
     if [ "${VERBOSE}" = 1 ]; then
-        printf "xinit ${_TWEAK_CFG} --bus="${PCIID}" --run-forever --  :${DISPLAY} -once -config ${_XORG_CFG} > /dev/null 2>&1 &\r\n"
+        printf "xinit ${_LOOP_FILE} --  :${DISPLAY} -once -config ${_XORG_CFG} > /dev/null 2>&1 &\r\n"
         printf "${_XORG_CFG} content\r\n"
         cat "${_XORG_CFG}"
     fi
 
     #RUN XINIT AND TWEAK
     if [ "${TEST}" = 0 ]; then
-        xinit "${_TWEAK_CFG}" --bus="${PCIID}" --run-forever --  :"${DISPLAY}" -once -config "${_XORG_CFG}" > /dev/null 2>&1 &
+        xinit "${_LOOP_FILE}" -- :"${DISPLAY}" -once -config "${_XORG_CFG}" > /dev/null 2>&1 &
+        wait
     fi
 
     #CLEANUP
     rm -f "${_XORG_CFG}"
+    rm -f "${_LOOP_FILE}"
 }
 
 function main
