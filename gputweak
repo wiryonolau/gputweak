@@ -169,8 +169,7 @@ function start_tweak
                 if [ ! -z "${_RESET}" ]; then
                     _TWEAKS=( \
                         "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=0" \
-                        "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=0" \
-                        "@NVSMI@ -i @PCI_BUS@ -rac "  
+                        "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=0" 
                     )
                     _TWEAKS=$(printf '%s\n' "${_TWEAKS[@]}" | jq -R . | jq -s .)
                 fi
@@ -227,10 +226,9 @@ function tweak_amd
         fi
     
         if [ "${TEST}" = 0 ]; then
-            /bin/bash -c "${_REALCMD}"
+            /bin/bash "${_REALCMD}"
         fi
 
-        wait
     done
 }
 
@@ -243,7 +241,7 @@ function tweak_nvidia
     local _COUNT=$(echo ${_TWEAKS} | jq ". | length")
 
 
-    if [[ ! $(xset -q -display "${DISPLAY}") ]]; then
+    if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
         start_xorg "${_PCIID}"
     fi
   
@@ -263,11 +261,11 @@ function tweak_nvidia
     fi
     
     #Recheck again before applying tweak
-    if [[ ! $(xset -q -display "${DISPLAY}") ]]; then
-        printf "Cannot start X Server on display ${DISPLAY}, disable tweak\n"
+    if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
+        printf "Cannot start X Server on display :${DISPLAY}, disable tweak\n"
     else
         if [ "${TEST}" = 0 ]; then
-            /bin/bash -c "${_TWEAK_CFG}"
+            /bin/bash "${_TWEAK_CFG}"
         fi
     fi
    
@@ -303,8 +301,7 @@ function start_xorg
 
     #RUN XINIT AND TWEAK
     if [ "${TEST}" = 0 ]; then
-        xinit "${_LOOP_FILE}" -- :"${DISPLAY}" -once -config "${_XORG_CFG}" > /dev/null 2>&1 &
-        wait
+        xinit "${_LOOP_FILE}" -- ":${DISPLAY}" -once -config "${_XORG_CFG}" > /dev/null 2>&1 &
     fi
 
     #Cannot remove
