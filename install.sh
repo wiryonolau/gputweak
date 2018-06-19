@@ -4,8 +4,9 @@ NOUPDATE=""
 
 function usage
 {
-    echo "Usage: install.sh [-v|--verbose] [--noupdate]"
+    echo "Usage: install.sh [-v|--verbose] [-h|--help] [--noupdate]"
     echo " -v | --verbose   : output verbose"
+    echo " -h | --help      : Print this help"
     echo " --noupdate       : Don't run apt-get update"
 }
 
@@ -72,3 +73,12 @@ function start_install
 
     systemctl daemon-reload
 }
+
+function main
+{
+    parse_args "$@"
+    exit 0
+}
+
+main "$@"
+
