@@ -206,7 +206,8 @@ function parse_pciid
             _RESULT=$(printf "%02x:%02x.%0x" "${_PCIID_ARRAY[@]}")
             ;;
         "rocm" )
-            _RESULT=$(printf "%x" "${_PCIID_ARRAY[0]}")
+            _RESULT=$(printf "0000:%02x:%02x:%0x" "${_PCIID_ARRAY[@]}")
+            _RESULT=$(find /sys/class/drm/card*/device/uevent -type f -print | xargs grep "${_RESULT}" | grep -o 'card\([0-9a-f]*\)' | sed -e 's/card//')
             ;;
     esac
     echo "${_RESULT}"
@@ -218,7 +219,12 @@ function tweak_amd
     local _TWEAKS=$2
     local _GPUID=$(parse_pciid "${_PCIID}" "rocm")
     local _COUNT=$(echo ${_TWEAKS} | jq ". | length")
-    
+   
+    if [ -z "${_GPUID}" ]; then
+        printf "Device GPU not found\r\n"
+        exit 0
+    fi
+ 
     for (( i=0; i<${_COUNT}; i++ ))
     do
         local _CMD=$(echo ${_TWEAKS} | jq -r ".[${i}]")
@@ -287,7 +293,7 @@ function start_xorg
     sed -e s,@GPU_BUS_ID@,"${_PCIBUS_XORG}",    \
         -e s,@SET_GPU_DIR@,"${WORKDIR}", \
         -e s,@COOLBITS@,"${NV_COOLBITS}", \
-        config/nvidia-xorg.conf >> "${_XORG_CFG}"
+        "${WORKDIR}/config/nvidia-xorg.conf" >> "${_XORG_CFG}"
 
     if [ "${VERBOSE}" = 1 ]; then
         printf "xinit ${_TWEAK_CFG} --bus="${PCIID}" --run-forever --  :${DISPLAY} -once -config ${_XORG_CFG} > /dev/null 2>&1 &\r\n"
