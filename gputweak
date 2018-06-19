@@ -206,7 +206,7 @@ function parse_pciid
             _RESULT=$(printf "%02x:%02x.%0x" "${_PCIID_ARRAY[@]}")
             ;;
         "rocm" )
-            _RESULT=$(printf "0000:%02x:%02x:%0x" "${_PCIID_ARRAY[@]}")
+            _RESULT=$(printf "0000:%02x:%02x.%0x" "${_PCIID_ARRAY[@]}")
             _RESULT=$(find /sys/class/drm/card*/device/uevent -type f -print | xargs grep "${_RESULT}" | grep -o 'card\([0-9a-f]*\)' | sed -e 's/card//')
             ;;
     esac
