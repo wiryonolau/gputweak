@@ -70,7 +70,7 @@ function start_install
 
     #Enable systemd startup
     printf "Setup systemd startup script\n"
-    cp -r ${WORKDIR}/config/systemd/* /etc/systemd/system
+    cp ${WORKDIR}/config/systemd/* /etc/systemd/system
     rm -f /etc/systemd/system/default.target
     ln -s /etc/systemd/system/custom.target /etc/systemd/system/default.target
     systemctl enable gputweak.service

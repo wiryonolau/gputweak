@@ -226,7 +226,7 @@ function tweak_amd
         fi
     
         if [ "${TEST}" = 0 ]; then
-            "${_REALCMD}"
+            /bin/bash -c "${_REALCMD}"
         fi
 
     done
