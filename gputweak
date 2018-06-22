@@ -226,7 +226,7 @@ function tweak_amd
         fi
     
         if [ "${TEST}" = 0 ]; then
-            /bin/bash "${_REALCMD}"
+            "${_REALCMD}"
         fi
 
     done
@@ -240,6 +240,10 @@ function tweak_nvidia
     local _PCIBUS=$(parse_pciid "${_PCIID}" "lspci")
     local _COUNT=$(echo ${_TWEAKS} | jq ". | length")
 
+    if [ ! -f "${NVSMI}" ] || [ ! -f "${NVSET}" ]; then
+        printf "NVIDIA Driver not installed\n"
+        return 1
+    fi
 
     if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
         start_xorg "${_PCIID}"
@@ -263,10 +267,11 @@ function tweak_nvidia
     #Recheck again before applying tweak
     if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
         printf "Cannot start X Server on display :${DISPLAY}, disable tweak\n"
-    else
-        if [ "${TEST}" = 0 ]; then
+        return 1
+    fi
+  
+    if [ "${TEST}" = 0 ]; then
             /bin/bash "${_TWEAK_CFG}"
-        fi
     fi
    
     #Cannot remove 
