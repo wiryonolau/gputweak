@@ -1,6 +1,7 @@
 ## Gputweak Script
 
-Gpu tweak script using nvidia-smi, nvidia-settings and rocm-smi.
+This is gpu tweak script using nvidia-smi, nvidia-settings and rocm-smi.  
+Script will be able to find GPU automatically and use the define tweak inside config/gputweak.json base on GPU product and vendor ID
 
 ## Requirement
 
@@ -58,3 +59,10 @@ Script can be run manually if you need to reset or apply new setting.
 
 ## Disclaimer
 Use this script at your own risk. We're not responsible for any damage this script cause to your system / GPU.
+
+## Donate
+Donation are welcome 
+
+BTC - bc1qur8aeernt2s7982sffyz7yv6882vgewsqdkyjg ( Segwit )  
+BTC - 3Kcs5hWVQRUGtJKv3DjKbkzbGTEtFEQkUx ( Compatible )  
+ETH - 0x9beb9B182a273Da689b08228385137440fEb8D6B  
