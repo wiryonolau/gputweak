@@ -2,59 +2,6 @@
 
 This is a gputweak helper script using nvidia-smi, nvidia-settings and rocm-smi.  
 Script will be able to find GPU automatically and use the define tweak inside config/gputweak.json base on GPU product and vendor ID.  
-Script can be run manually or using as startup script with systemd
-
-To find your GPU ID check from your console using "lspci -vnn", then take note of the product and vendor id.  
-![pci_id](https://raw.githubusercontent.com/wiryonolau/gputweak/master/img/pci_id.jpg)
-
-Configuration are base on json format, I already put some of the card I tested inside config/gputweak.json
-
-```
-{
-    "description": "Put the description of your GPU here",
-    "driver" : "specify the driver type, either amdgpu or nvidia, the script have to use this value",
-    "system_id": "see image above on how to obtain",
-    "subsystem_id": "see image above on how to obtain",
-    "tweaks" : [
-        "tweak you want to run"
-    ]
-}
-```
-
-Predefine variable for tweaks are
-- @NVSMI@ : will be replace by nvidia-smi executable path 
-- @NVSET@ : will be replace by nvidia-settings executable path
-- @PCI_BUS@ : will be replace by GPU pci bus address ( for NVIDIA card )
-- @ROCSMI@ : will be replace by rocm-smi executable path
-- @GPUID@ : will be replace by GPU id base on pci bus ( for AMD card )
-
-Example tweak for AMDGPU, setting fan and core clock
-```
-{
-    "tweaks" : [      
-        "@ROCSMI@ -d @GPUID@ --setfan 180",
-        "@ROCSMI@ -d @GPUID@ --setsclk 3"
-    ]
-}
-```
-
-Example tweak for NVIDIA
-```
-{
-    "tweaks" : [
-        "@NVSET@ -a [gpu:0]/GPUFanControlState=1",
-        "@NVSET@ -a [fan:0]/GPUTargetFanSpeed=70",
-        "@NVSET@ -a [gpu:0]/GPUPowerMizerMode=1",
-        "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=-200",
-        "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=450",
-        "@NVSMI@ -i @PCI_BUS@ -pm 1",
-        "@NVSMI@ -i @PCI_BUS@ -pl 100"
-    ]
-}
-```
-
-There is no safety mechanism when deploying tweak, so it's best to check the maximum clock, memclock, fan, etc before run this automatically.  
-For AMD card currently there is no overclock mechanism available in Linux, you still require to update the BIOS directly.
 
 ## Requirement
 
@@ -88,7 +35,7 @@ Usage: gputweak [-v|--verbose] [-h|--help] [OPTIONS]
   --nvsmi          : set nvidia-smi executable path, default /usr/bin/nvidia-smi
   --nvset          : set nvidia-settings executable path, default /usr/bin/nvidia-settings
   --rocmsmi        : set rocm-smi executable path, default /usr/bin/rocm-smi
-  --reset          : reset and remove all tweak
+  --reset          : reset and remove all tweak, will ignore other options
   --config         : specify gputweak config file, overwrite default. check config/gputweak.json for example
 ```
 
@@ -107,8 +54,78 @@ sudo rm -f /etc/systemd/system/default.target
 sudo ln -s /etc/systemd/system/custom.target /etc/systemd/system/default.target
 ```
 
+## Create GPU tweak config
+
+You can add more tweak config in config/gputweak.json. Below are the step
+
+1. Find your GPU ID check from your console using "lspci -vnn", then take note of the product and vendor id for both system and subsytem one.  
+![pci_id](https://raw.githubusercontent.com/wiryonolau/gputweak/master/img/pci_id.jpg)
+
+2. Then add another json object inside the config with this format
+```
+[
+    {
+        "description": "Put the description of your GPU here" (optional),
+        "driver" : "specify the driver type, either amdgpu or nvidia, the script have to use this value (required)",
+        "system_id": "see image above on how to obtain, if not available use 0000:0000 (required)",
+        "subsystem_id": "see image above on how to obtain, if not available use 0000:0000 (required)",
+        "tweaks" : [
+            "a list of tweak you want to run (required)"
+        ]
+    }
+]
+```
+
+Example tweak for AMDGPU, setting fan and core clock
+```
+[
+    {
+        "system_id" : "..."
+        "subsystem_id" : "..."
+        "tweaks" : [      
+            "@ROCSMI@ -d @GPUID@ --setfan 180",
+            "@ROCSMI@ -d @GPUID@ --setsclk 3"
+        ]
+    }
+]
+```
+
+Example tweak for NVIDIA
+```
+[
+    {
+        "system_id" : "..."
+        "subsystem_id" : "..."
+        "tweaks" : [
+            "@NVSET@ -a [gpu:0]/GPUFanControlState=1",
+            "@NVSET@ -a [fan:0]/GPUTargetFanSpeed=70",
+            "@NVSET@ -a [gpu:0]/GPUPowerMizerMode=1",
+            "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=-200",
+            "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=450",
+            "@NVSMI@ -i @PCI_BUS@ -pm 1",
+            "@NVSMI@ -i @PCI_BUS@ -pl 100"
+        ]
+    }
+]
+```
+
+Predefine variable for tweaks are
+- @NVSMI@ : will be replace by nvidia-smi executable path 
+- @NVSET@ : will be replace by nvidia-settings executable path
+- @PCI_BUS@ : will be replace by GPU pci bus address ( for NVIDIA card )
+- @ROCSMI@ : will be replace by rocm-smi executable path
+- @GPUID@ : will be replace by GPU id base on pci bus ( for AMD card )
+
+3. Run the script directly
+
+```
+gputweak -v
+```
+
 ## Notes
-Script can be run manually if you need to reset or apply new setting.
+There is no safety mechanism when deploying tweak, so it's best to check the maximum clock, memclock, fan, etc before run this automatically.  
+For AMD card currently there is no overclock mechanism available in Linux, you still require to update the BIOS directly.  
+Script can be run manually if you need to reset or apply or test new setting.
 
 ## Disclaimer
 Use this script at your own risk. We're not responsible for any damage this script cause to your system / GPU.
