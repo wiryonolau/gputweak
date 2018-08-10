@@ -97,6 +97,8 @@ function parse_args
 function start_tweak
 {
     local _RESET=$2
+    local _HASAMDGPU=0
+    local _HASNVIDIA=0
 
     if [ -z "$1" ]; then
         #GET PCI ID FOR ALL NVIDIA/AMD GPU
@@ -156,6 +158,7 @@ function start_tweak
 
         case "${_DRIVER}" in
             "amdgpu" )
+                _HASAMDGPU=$((_HASAMDGPU+1))
                 if [ ! -z "${_RESET}" ]; then
                     _TWEAKS=( \
                          "@ROCSMI@ -d @GPUID@ -r" \
@@ -166,6 +169,7 @@ function start_tweak
                 tweak_amd "${_PCIID}" "${_TWEAKS}"
                 ;;
             "nvidia" )
+                _HASNVIDIA=$((_HASNVIDIA+1))
                 if [ ! -z "${_RESET}" ]; then
                     _TWEAKS=( \
                         "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=0" \
@@ -180,6 +184,11 @@ function start_tweak
         DISPLAY=$((DISPLAY+1))
         printf "\n"
     done <<< "${_PCIIDS}"
+    
+    if [ "${_HASAMDGPU}" -gt "0" ]; then
+        #Run small opencl program so amdgpu watt will decrease on startup
+        /bin/bash -c "${WORKDIR}/amdgpu-devices"
+    fi
 }
 
 function parse_pciid
