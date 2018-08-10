@@ -66,7 +66,7 @@
         "subsystem_id": "1002:0b31",
         "tweaks" : [
             "@ROCSMI@ -d @GPUID@ --setfan 180",
-            "@ROCSMI@ -d @GPUID@ --setsclk 7"
+            "@ROCSMI@ -d @GPUID@ --setsclk 5"
         ]
     },
     {
