@@ -62,7 +62,7 @@ function start_install
     ln -s /opt/gputweak/gputweak /usr/bin/gputweak
 
     #Build AMDGPU OPENCL device detector
-    if [[ ! -z "/opt/gputweak/amdgpu-devices.c" ]]; then
+    if [[ -z "/opt/gputweak/amdgpu-devices.c" ]]; then
         /usr/bin/wget https://laanwj.github.io/assets/2016/05/06/opencl-ubuntu1604/devices.c -O /opt/gputweak/amdgpu-devices.c 
     fi
     /usr/bin/gcc /opt/gputweak/amdgpu-devices.c -o /opt/gputweak/amdgpu-devices -O2 /opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so
