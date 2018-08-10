@@ -20,6 +20,7 @@ function usage
     echo "Usage: gputweak [-v|--verbose] [-h|--help] [OPTIONS]"
     echo " -v | --verbose   : output verbose"
     echo " -h | --help      : this message"
+    echo " --update-config  : Update and overwrite config/gputweak.json from main git"
     echo ""
     echo " OPTIONS"
     echo "  --test           : Test mode, no tweak is run. Using"
@@ -48,6 +49,10 @@ function parse_args
             ;;
             "-h" | "--help")
                 usage
+                exit 0
+                ;;
+            "--update-config")
+                wget https://raw.githubusercontent.com/wiryonolau/gputweak/master/config/gputweak.json -O "${WORKDIR}/config/gputweak.json"
                 exit 0
                 ;;
             "--test")
