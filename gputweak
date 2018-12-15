@@ -32,6 +32,7 @@ function usage
     echo "  --rocmsmi        : set rocm-smi executable path, default /usr/bin/rocm-smi"
     echo "  --reset          : reset and remove all tweak"
     echo "  --config         : specify gputweak config file, overwrite default. check config/gputweak.json for example"
+    echo "  --user           : read gputweak config file from /home/{user}/.gputweak/gputweak.json"
     exit 0
 }
 
@@ -73,8 +74,31 @@ function parse_args
                 _RESET=1
                 ;;
             "--config" )
-                TWEAKCONFIG=$(cat "$2")
-                ;;            
+                if [ -e "$2" ]; then
+                    USERCONFIG=$(cat "$2")
+                    if jq -e . > /dev/null 2>&1 <<< "$USERCONFIG"; then
+                        TWEAKCONFIG=$USERCONFIG
+                    else
+                        printf "Invalid user config, using default config\n" 
+                    fi
+                else
+                    printf "User config not exist, using default config\n"
+                fi
+                ;;           
+            "--user" )
+                USERNAME=$2
+                USERCONFIGFILE="/home/$USERNAME/.gputweak/gputweak.json"
+                if [ -e "$USERCONFIGFILE" ]; then
+                    USERCONFIG=$(cat "$USERCONFIGFILE")
+                    if jq -e . >/dev/null 2>&1 <<<"$USERCONFIG"; then
+                        TWEAKCONFIG=$USERCONFIG
+                    else
+                        printf "Invalid user config, using default config\n" 
+                    fi
+                else
+                    printf "User config not exist, using default config\n"
+                fi
+                ;;
             "--nvsmi")
                 NVSMI="$2"
                 ;;
@@ -87,7 +111,7 @@ function parse_args
         esac
         shift
     done
-    
+
     set -- "${args[@]}"
 
     printf "Start Tweak script using configuration:\n"

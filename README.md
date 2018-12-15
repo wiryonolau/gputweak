@@ -37,6 +37,7 @@ Usage: gputweak [-v|--verbose] [-h|--help] [OPTIONS]
   --rocmsmi        : set rocm-smi executable path, default /usr/bin/rocm-smi
   --reset          : reset and remove all tweak, will ignore other options
   --config         : specify gputweak config file, overwrite default. check config/gputweak.json for example
+  --user           : read gputweak config file from /home/{user}/.gputweak/gputweak.json
 ```
 
 ## Run at startup
