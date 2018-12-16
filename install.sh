@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 VERBOSE=""
 NOUPDATE=""
+NOXORG=""
 
 function usage
 {
@@ -8,6 +9,7 @@ function usage
     echo " -v | --verbose   : output verbose"
     echo " -h | --help      : Print this help"
     echo " --noupdate       : Don't run apt-get update"
+    echo " --noxorg         : Don't replace xorg"
 }
 
 function parse_args
@@ -26,6 +28,9 @@ function parse_args
                 ;;
             "--noupdate" )
                 NOUPDATE=1
+            ;;
+            "--noxorg" )
+                NOXORG=1
             ;;
         esac
         shift
@@ -68,14 +73,15 @@ function start_install
     /usr/bin/gcc /opt/gputweak/amdgpu-devices.c -o /opt/gputweak/amdgpu-devices -O2 /opt/amdgpu-pro/lib/x86_64-linux-gnu/libOpenCL.so
 
     #Setup main xorg.conf
-    printf "Setup xorg.conf\n"
-    if [[ ! -z "/etc/X11/xorg.conf" ]]; then
-        NOW=$(date +%s)
-        chattr -i /etc/X11/xorg.conf
-        cp /etc/X11/xorg.conf "/etc/X11/xorg.conf.${NOW}"
-    fi
-    cp /opt/gputweak/config/xorg.conf /etc/X11/xorg.conf
-    chattr +i /etc/X11/xorg.conf
+    if [ -z "${NOXORG}" ]; then
+        printf "Setup xorg.conf\n"
+        if [[ ! -z "/etc/X11/xorg.conf" ]]; then
+            NOW=$(date +%s)
+            chattr -i /etc/X11/xorg.conf
+            cp /etc/X11/xorg.conf "/etc/X11/xorg.conf.${NOW}"
+        fi
+        cp /opt/gputweak/config/xorg.conf /etc/X11/xorg.conf
+        chattr +i /etc/X11/xorg.conf
 
     #Enable systemd startup
     printf "Setup systemd startup script\n"
