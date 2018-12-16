@@ -82,6 +82,7 @@ function start_install
         fi
         cp /opt/gputweak/config/xorg.conf /etc/X11/xorg.conf
         chattr +i /etc/X11/xorg.conf
+    fi
 
     #Enable systemd startup
     printf "Setup systemd startup script\n"
