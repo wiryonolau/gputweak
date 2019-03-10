@@ -2,6 +2,7 @@
 VERBOSE=""
 NOUPDATE=""
 NOXORG=""
+NOCUSTOM=""
 
 function usage
 {
@@ -10,6 +11,7 @@ function usage
     echo " -h | --help      : Print this help"
     echo " --noupdate       : Don't run apt-get update"
     echo " --noxorg         : Don't replace xorg"
+    echo " --nocustom       : Don't use custom target"
 }
 
 function parse_args
@@ -31,6 +33,9 @@ function parse_args
             ;;
             "--noxorg" )
                 NOXORG=1
+            ;;
+            "--nocustom" )
+                NOCUSTOM=1
             ;;
         esac
         shift
@@ -84,12 +89,14 @@ function start_install
         chattr +i /etc/X11/xorg.conf
     fi
 
-    #Enable systemd startup
+    #Enable systemd custom target startup
     printf "Setup systemd startup script\n"
     systemctl disable gputweak.service
     cp ${WORKDIR}/config/systemd/* /etc/systemd/system
-    rm -f /etc/systemd/system/default.target
-    ln -s /etc/systemd/system/custom.target /etc/systemd/system/default.target
+    if [ -z "${NOCUSTOM}" ]; then
+        rm -f /etc/systemd/system/default.target
+        ln -s /etc/systemd/system/custom.target /etc/systemd/system/default.target
+    fi
     systemctl enable gputweak.service
 
     systemctl daemon-reload
