@@ -216,6 +216,7 @@ function start_tweak
     
     if [ "${_HASAMDGPU}" -gt "0" ]; then
         #Run small opencl program so amdgpu watt will decrease on startup
+        sleep 5
         /bin/bash -c "${WORKDIR}/amdgpu-devices"
     fi
 }
