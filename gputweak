@@ -214,11 +214,10 @@ function start_tweak
         printf "\n"
     done <<< "${_PCIIDS}"
     
-    if [ "${_HASAMDGPU}" -gt "0" ]; then
+    #if [ "${_HASAMDGPU}" -gt "0" ]; then
         #Run small opencl program so amdgpu watt will decrease on startup
-        sleep 5
-        /bin/bash -c "${WORKDIR}/amdgpu-devices"
-    fi
+        #/bin/bash -c "${WORKDIR}/amdgpu-devices"
+    #fi
 }
 
 function parse_pciid
