@@ -1,0 +1,36 @@
+## 0.1.0 (August 21, 2019)
+  - Add gputweak done state
+  - disable run opencl for amd, cause setsclk to reset
+  - add delay before applying opencl
+  - add nocustom target
+  - Fix install script
+  - add noxorg options
+  - Add user base tweak
+  - Update config
+  - Add function to update config from git
+  - Fix typo condition
+  - Add small opencl program to run on tweak to reduce watt
+  - Readjust readme content
+  - Fix readme tutorial
+  - Update readme
+  - Fix systemctl
+  - Fix tweak amd
+  - remove /bin/bash when running amd tweak, fix systemd script
+  - Add 10s start delay to gputweak.service
+  - fix typo DISPLAY
+  - fix nvidia tweak
+  - Add P104-100
+  - Fix nvidia tweak, remove noxorg option
+  - install main
+  - fix typo and install script
+  - fix amd tweak and install script
+  - Add install jq library in install.sh
+  - fix README
+  - Fix install.sh, add xorg.conf
+  - Add install script
+  - add systemd config, add x detection
+  - fix reset function, add new gpu
+  - backup works
+  - backup file
+  - first commit
+
