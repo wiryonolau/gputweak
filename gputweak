@@ -119,13 +119,8 @@ function parse_args
     printf "nvidia-settings executable  : ${NVSET}\n"
     printf "rocm-smi executable         : ${ROCSMI}\n"
 
-    # Remove done state
-    if [ -f "${WORKDIR}/done" ]; then
-        rm "${WORKDIR}/done"
-    fi
-
     start_tweak "${_PCIIDS}" "${_RESET}"
-
+    touch "/home/${USERNAME}/done"
     exit 0
 }
 
@@ -144,8 +139,7 @@ function start_tweak
 
     if [ -z "$_PCIIDS" ]; then
         printf "No recognizable AMD / NVIDIA Device\n\n"
-        touch "${WORKDIR}/done"
-        exit 0
+        return 0
     fi
 
     while read -r _PCIID; do
@@ -221,10 +215,10 @@ function start_tweak
         printf "\n"
     done <<< "${_PCIIDS}"
 
-    #if [ "${_HASAMDGPU}" -gt "0" ]; then
-        #Run small opencl program so amdgpu watt will decrease on startup
-        #/bin/bash -c "${WORKDIR}/amdgpu-devices"
-    #fi
+    if [ "${_HASAMDGPU}" -gt "0" ]; then
+        ## Run small opencl program so amdgpu watt will decrease on startup
+        /bin/bash -c "${WORKDIR}/amdgpu-devices"
+    fi
 }
 
 function parse_pciid
@@ -258,8 +252,7 @@ function tweak_amd
 
     if [ -z "${_GPUID}" ] && [ "${TEST}" = 0 ]; then
         printf "Device GPU not found\n"
-        touch "${WORKDIR}/done"
-        exit 0
+        return 1
     fi
 
     for (( i=0; i<${_COUNT}; i++ ))
