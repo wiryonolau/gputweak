@@ -33,6 +33,7 @@ function usage
     echo "  --reset          : reset and remove all tweak"
     echo "  --config         : specify gputweak config file, overwrite default. check config/gputweak.json for example"
     echo "  --user           : read gputweak config file from /home/{user}/.gputweak/gputweak.json"
+    echo "  --post           : post script to run after tweak"
     exit 0
 }
 
@@ -41,6 +42,8 @@ function parse_args
     local _ARGS=()
     local _PCIIDS=""
     local _RESET=""
+    local _POSTSCRIPT=""
+    local _USERCONFIGFILE="$WORKDIR/config/gputweak.json"
 
     while [ "$1" ]
     do
@@ -65,6 +68,7 @@ function parse_args
             "--coolbits")
                 if [[ "$2" -le 31 ]]; then
                     NV_COOLBITS="$2"
+                    shift
                 else
                     printf "NVIDIA coolbits maximum value is 31\n"
                 fi
@@ -75,9 +79,11 @@ function parse_args
                 ;;
             "--config" )
                 if [ -e "$2" ]; then
-                    USERCONFIG=$(cat "$2")
+                    _USERCONFIGFILE="$2"
+                    USERCONFIG=$(cat "$_USERCONFIGFILE")
                     if jq -e . > /dev/null 2>&1 <<< "$USERCONFIG"; then
                         TWEAKCONFIG=$USERCONFIG
+                        shift
                     else
                         printf "Invalid user config, using default config\n"
                     fi
@@ -87,9 +93,9 @@ function parse_args
                 ;;
             "--user" )
                 USERNAME=$2
-                USERCONFIGFILE="/home/$USERNAME/.gputweak/gputweak.json"
-                if [ -e "$USERCONFIGFILE" ]; then
-                    USERCONFIG=$(cat "$USERCONFIGFILE")
+                _USERCONFIGFILE="/home/$USERNAME/.gputweak/gputweak.json"
+                if [ -e "$_USERCONFIGFILE" ]; then
+                    USERCONFIG=$(cat "$_USERCONFIGFILE")
                     if jq -e . >/dev/null 2>&1 <<<"$USERCONFIG"; then
                         TWEAKCONFIG=$USERCONFIG
                     else
@@ -98,15 +104,23 @@ function parse_args
                 else
                     printf "User config not exist, using default config\n"
                 fi
+                shift
+                ;;
+            "--post")
+                _POSTSCRIPT="$2"
+                shift
                 ;;
             "--nvsmi")
                 NVSMI="$2"
+                shift
                 ;;
             "--nvset")
                 NVSET="$2"
+                shift
                 ;;
             "--rocmsmi")
                 ROCSMI="$2"
+                shift
                 ;;
         esac
         shift
@@ -118,9 +132,17 @@ function parse_args
     printf "nvidia-smi executable       : ${NVSMI}\n"
     printf "nvidia-settings executable  : ${NVSET}\n"
     printf "rocm-smi executable         : ${ROCSMI}\n"
+    printf "\n"
+    printf "Tweak config path           : ${_USERCONFIGFILE}\n"
+    printf "Script to run on complete   : ${_POSTSCRIPT}\n"
+    printf "\n"
 
     start_tweak "${_PCIIDS}" "${_RESET}"
-    touch "/home/${USERNAME}/done"
+
+    if [ ! -z "${_POSTSCRIPT}" ] && [ -f "${_POSTSCRIPT}" ]; then
+        /bin/bash -c "${_POSTSCRIPT}" &
+    fi
+
     exit 0
 }
 
@@ -219,6 +241,7 @@ function start_tweak
         ## Run small opencl program so amdgpu watt will decrease on startup
         /bin/bash -c "${WORKDIR}/amdgpu-devices"
     fi
+    return 0
 }
 
 function parse_pciid
@@ -304,13 +327,14 @@ function tweak_nvidia
     fi
 
     #Recheck again before applying tweak
-    if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
-        printf "Cannot start X Server on display :${DISPLAY}, disable tweak\n"
-        return 1
-    fi
+    #Some time failed disable for now 20190822
+    # if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
+    #     printf "Cannot start X Server on display :${DISPLAY}, disable tweak\n"
+    #     return 1
+    # fi
 
     if [ "${TEST}" = 0 ]; then
-            /bin/bash "${_TWEAK_CFG}"
+        /bin/bash "${_TWEAK_CFG}"
     fi
 
     #Cannot remove
