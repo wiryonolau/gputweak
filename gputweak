@@ -307,7 +307,11 @@ function tweak_nvidia
         return 1
     fi
 
-    if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
+    # if [[ ! $(xset -q -display ":${DISPLAY}") ]]; then
+    #     start_xorg "${_PCIID}"
+    # fi
+
+    if ! $(xdpyinfo -display ":${DISPLAY}" > /dev/null 2>&1); then
         start_xorg "${_PCIID}"
     fi
 
@@ -332,6 +336,13 @@ function tweak_nvidia
     #     printf "Cannot start X Server on display :${DISPLAY}, disable tweak\n"
     #     return 1
     # fi
+
+    # Delay to wait for display started
+    sleep 1
+    if ! $(xdpyinfo -display ":${DISPLAY}" > /dev/null 2>&1); then
+        printf "Cannot start X Server on display :${DISPLAY}, disable tweak\n"
+        return 1
+    fi
 
     if [ "${TEST}" = 0 ]; then
         /bin/bash "${_TWEAK_CFG}"
