@@ -125,5 +125,20 @@
             "@NVSMI@ -i @PCI_BUS@ -pm 1",
             "@NVSMI@ -i @PCI_BUS@ -pl 52.5"
         ]
+    },
+    {
+        "description": "MANLI RTX3070M",
+        "driver" : "nvidia",
+        "system_id": "10de:249d",
+        "subsystem_id": "10de:0000",
+        "tweaks" : [
+            "@NVSET@ -a [gpu:0]/GPUFanControlState=1",
+            "@NVSET@ -a [fan:0]/GPUTargetFanSpeed=70",
+            "@NVSET@ -a [gpu:0]/GPUPowerMizerMode=1",
+            "@NVSET@ -a [gpu:0]/GPUGraphicsClockOffset[3]=-700",
+            "@NVSET@ -a [gpu:0]/GPUMemoryTransferRateOffset[3]=2500",
+            "@NVSMI@ -i @PCI_BUS@ -pm 1",
+            "@NVSMI@ -i @PCI_BUS@ -pl 100"
+        ]
     }
 ]
